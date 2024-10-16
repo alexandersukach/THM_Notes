@@ -1,3 +1,3 @@
 # THM_Notes
-Collection of my (generalized) notes while completing TryHackMe rooms
+Collection of notes gathered while completing TryHackMe rooms
 
