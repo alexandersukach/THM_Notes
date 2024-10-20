@@ -1,0 +1,271 @@
+_______________
+DNS in detail
+--------------
+				What is DNS?
+
+DNS (Domain Name System) provides a way to communicate with devices without remembering complex numbers
+	Every house has an address; every computer has its own unique address (IP address)
+
+IP address has 4 sets of digits ranging from 0-255 separated by a period
+
+When visiting a website, it is much easier to remember tryhackme.com as opposed to 104.26.10.229
+
+
+
+				Domain Hierarchy
+
+TLD (Top-Level Domain) is the most righthand part of a domain, ex.) .com
+	Two types: 1.) gTLD (Generic) and 2. ccTLD (Country Code)
+	1. historically meant to tell users the domain name's purpose; ex. .com was for commercial use,
+.org for organization, .edu for education, .gov for government
+	2. used for geographical purposes; ex. .ca for Canada, .co.uk for Unitied Kingdon
+Nowadays, there are many new gTLDs, such as .online, .club, .biz, etc.
+
+
+Second-Level Domain - the "actual name" of the site tryhackme is SLD and .com is TLD
+	- limited to 63 characters + the TLD
+	- can only use a-z, 0-9, and hyphens (cannot start/end with or have consecutive hyphens)
+
+
+Subdomain - left-hand side of the SLD; admin (sub) .tryhackme (SLD) .com (TLD)
+	- same name creation restrictions as SLD
+	- you can have multiple subdomains spli with periods to create longer names (jupiter.servers.thm.com),
+	but the length must be kept to 253 characters or less (maximum length of domain name)
+	- no limit on the number of subdomains that can be created for a domain name
+
+
+
+				Record Types
+
+A Record - resolves to an IPv4 address, ex.) 104.26.10.229
+
+AAAA Record - resolves to an IPv6 address, ex.) 2606:4700:20::681a:be5
+
+CNAME Record - resolves to another domain name, ex.) store.tryhackme.com returns CNAME record shops.shopify.com
+	Another DNS request would then be made to shops.shopify.com to work out its IP address
+
+MX Record - resolves to address of servers handling the email for the domain being queried ex.) MX response for
+	tryhackme.com would be something like alt1.aspmx.l.google.com
+	- these records come with a priority flag telling the client in which order to try the servers, which 
+	could be usefule if the main server goes down and the email needs to be sent to a backup server
+
+TXT Record - free text fields where any text-based data can be store
+	- many uses, but some common ones can be to listservers with the authority to send an email on behalf
+	of the domain (helps against spam/spoofed emails) and to verify ownership of the domain name when
+	signing up for third party services
+
+
+
+				Making a (DNS) Request
+
+1. When you request a domain name, your computer first checks its local cache to see if the address has been
+	recently looked up; if not, a request to your Recursive DNS Server is made
+
+2. A Recursive DNS Server (usually provided by ISP but can also be chosen) has local cache of recently looked up domain
+	names, including popular/heavily searched for sch as Google, FaceBook, Twitter, etc. If the request
+	cannot be found locally, then it continues to the root DNS servers.
+
+3. The root servers acts as the DNS backbone of the internet, by riderecting you to the correct TLD server, depending
+	on the request. Ex.) A request to tryhackme.com would be reffered to the correct TLD server that deals with
+	.com addresses
+
+4. The TLD server holds records for where to find the authoritative server to answer the request (also known as the 
+	nameserver). Tryhackme.com's nameserver is kip.ns.cloudflare.com and uma.ns.cloudflare.com; you will typically
+	see multiply nameservers for a domain to act as a backup in case one goes down.
+
+5. The authoritative DNS server is responsible for storing all DNS records for a particular domain name and where any 
+	updates to your domain name DNS records would be made. Depending on the record type, the DNS record
+	is sent back to the Recursive server, where a local copy is cached for future requests, and then relayed
+	back to the original client making the request.
+
+DNS records all come with  TTL (Time to Live) value; this is a number represented in seconds of how long the 
+	response should be saved locally before having to be looked up again. (Caching saves on having to make a 
+	DNS request every time we communicate with a server).
+
+
+Simply put:
+	Computer -> Recursive -> Root -> (TLD Server) -> Authoritative -> Computer
+
+
+nslookup can be used to find record information given a type and (sub)domain
+	ex.) nslookup --CNAME shop.website.thm
+returns
+	Server: 127.0.0.53
+	Address: 127.0.0.53#53
+	Non-authoritative answer:
+	shop.website.thm canonical name = shops.myshopify.com
+
+Here we see that the CNAME record points to another address, where the IP would need to be resolved with another request
+
+
+
+
+
+
+
+
+
+
+_______________
+HTTP in Detail
+---------------
+
+				What is HTTP(S)?
+
+HTTP (HyperText Transfer Protocol) is a set of rules used for communicating with web servers for the transmitting
+of webpage data, whether that is HTML, Images, Videos, etc.
+
+HTTPS is the secure version of HTTP, where data is encrypted, and also provides assurance that you are talking with
+	the correct web server and not something impersonating it
+
+Tim Berners-Lee and his team developed the World Wide Web between 1989-1991
+
+
+
+				Requests and Responses
+
+When accessing a website, the browser needs to make a a request to a web server to access assets, but must be told
+	beforehand speciically where and how to access the resources (URL)
+
+URL (Uniform Resource Locator) - is predominantly an instruction on how to access a resource on the iternet
+
+
+  1        2              3        4      5      6    7
+http://user:password@tryhackme.com:80/view-room?id=1#task3
+1. Schema - instructs on what protocol is used, ie HTTP, HTTPS, FTP, etc.
+2. User - some services require authentication to log in
+3. Host - domain name or IP address of server being accessed
+4. Port - port you are conecting to, usually 80 for HTTP and 443 for HTTPS
+5. Path - file name or location of resource being accessed
+6. Query string - extra information sent to the requested path, ex. blog with id 1
+7. Fragment - reference to a location on the actual page requested, commonly used
+	for pages with long content and can link the page directly to that section
+
+In most cases, a request contains the method, the website to access, the web server
+	we are using, and from which website we are coming from (Referer)
+Ex.
+	GET /HTTP/1.1
+	Host: tryhackme.com
+	User-Agent: Mozilla/5.0 Firefox, 87.0
+	Referer: https://tryhackme.com/
+
+Above all else, a response contains the web server information, content type,
+	and content length
+Ex.
+	HTTP/1.1 200 OK
+	Server: nginx/1.15.8
+	Date: Fri, 09 April 2021 13:34:03 GMT
+	Content-Type: text/html
+	Content-Length: 98
+
+
+
+				HTTP Methods
+
+Methods are a way for the client to show intended action when making a request
+The two most common ones you'll deal with are GET and POST methods
+
+GET - used for getting information from a web server
+POST - used for submitting data and potentially creating new records
+PUT - used for submitting data to update information
+DELETE - used for deleting information/records from a web server
+
+
+
+				HTTP Status Codes
+
+The first line of a response always contains a status code informing the client
+	of the outcome of the request and potentially how to handle it
+
+100-199: Information Response - sent to tell the client the first part of their
+	request has been accepted and they should continue sending the rest of 
+	the request (Not very common nowadays)
+200-299: Success - this range tells the client their request was successful
+300-399: Redirection - redirect the client's request to another resource;
+	this can be a different webpage or different website entirely
+400-499: Client Errors - inform the client their was an error with their request
+500-599: Server Errors - reserved for errors happening on the server-side, 
+	usually indicates a major problem with the server handling the request
+
+~ Common status Codes ~
+200: OK - request completed successfully
+201: Created - resource has been created (Ex. a new user or a new blog post)
+301: Move Permanently - redirects client's browser to a new webpage or 
+	tells search engines ths page has moved elsewhere and to look there instead
+302: Found - (similar to 301) only a temporary and may change in the near future
+400: Bad Request - tells browser something was either wrong/missing in the request;
+	can be used if the web server resource expects a certain parameter that
+	the client didn't send
+401: Not authorized - you're not currently allowed to view the resource until
+	you've been authorized with the web app (typically a username and password)
+403: Forbidden - you don't have permission to view the resource, logged in or not
+404: Page Not Found - page/resource you request does not exist
+405: Method Not Allowed - the resource doesn't allow this method; for example,
+	sending a GET request instead of a POST when creating an account
+500: Internal Service Error - server has encountered some sort of error with the
+	request and doesn't know how to handle it properly
+
+
+
+				Headers
+
+Headers are additional bits of data  you can send to server when makiong requests
+
+Common request headers:
+Host: some web servers host multiple websites so by providing the host headers you can tell it
+	which you require; otherwise, you'll just receive the default website for the server
+User-Agent: your browser software and version number, which helps format the
+	site properly for your browser
+Content-Length: when sending data to a web server in a form, the content length tells the web server
+	how much data to expect in the web request, this way we ensure we're not missing any data
+Accept-Encoding: tells the server what types of compression methods the browser supports so the 
+	data can be made smaller for transmitting over the internet
+Cookie: data sent to the server to help remember your information
+
+Common response headers:
+Set-Cookie: information to store which gets sent back to the server on each request
+Cache-Control: how long to store response content in browser's cahce before it requests again
+Content-Type: what type of data is being returned, ex. HTML, CSS, JS, images, etc., so the browser
+	the knows how to process it
+Content-Encoding: what method has been used to compress the data when sending over the internet
+
+
+
+				Cookies
+
+Cookies are just a small piece of data store on your computer; they are saved when you receive
+	a "Set-Cookie" header, then every further request made will send the cookies back to 
+	the seb server
+Because HTTP is stateless (doesn't keep track of your previous request(s)), cookies remind
+	the web server who you are, personal settings, and other "session' information
+Cookies are most commonly used for website authentication and instead of being a clear-text
+	string, is more often a unique token that isn't easily guessable
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
