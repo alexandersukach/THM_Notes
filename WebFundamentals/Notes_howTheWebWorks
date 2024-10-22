@@ -250,6 +250,167 @@ Cookies are most commonly used for website authentication and instead of being a
 
 
 
+_________________
+How Websites Work
+-----------------
+
+
+
+				How Wesites Work
+
+When visiting a website, your browser makes a request to a web server asking for information about the page you are
+	visiting. It responds with data that your browser uses to show the page
+(A web server is simply a dedicated computer somewhere else in the world that handles your requests)
+
+2 major components of a website:
+1. Front End (Client-Side) - the way your browser renders a website
+2. Back End (Server-Side) - a server that processes your request and returns a response
+
+
+
+				HTML
+
+Websites primary use:
+HTML - to build websites and define their structure
+CSS - to make sebsites look pretty by adding styling options
+JavaScript - to make website interactive and implement more complex features
+
+HyperText Markup Language - language websites are written in. Elements (also known as tags) are the "building blocks"
+	of HTML pages and tell the browser how to display content
+
+Ex. HTML components
+<!DOCTYPE html> - defines the page as a HTML5 document (placed at top of file)
+<html> - root element of page
+<head> - information about the page (ex. page title)
+<body> - defines the document's body; only contents found inside the body are shown in the browser
+<h1> - defines large heading (h2, h3, onward decreases heading size)
+<p> - defines a paragraph
+
+Elements have both an opening and closing tag: ex.) <body> BODY </body>
+
+You can view a website's source code by righ-clicking and selecting 'View Page Source'
+
+
+
+				JavaScript
+
+HTML is used to create website structure and content, while JS is used to control its functionality; without JS,
+	a webpage would always be static
+
+JS is added within a page's source code using <script> tags or remotely using src attribute <script src='file.js'></script>
+
+The following finds an HTML element with an id of "demo" and changes its contents to "Hack the Planet"
+	document.getElementById("demo").innerHTML = "Hack the Planet";
+
+
+
+
+				Sensitive Data Exposure
+
+This occurs when a website doesn't properly protect (or remove) sensitive clear-text information to the client, which
+	is usually found in the site's frontend source code.
+
+Sometimes web developers will leave credentials/notes for their sake, but forget to change them after deployment
+
+When assessing a web application for security issues, one of the first things to do is review the source page
+	to see if you can find exposed credentials or hidden links
+
+
+
+				HTML Injection
+
+This vulnerability occurs when unfiltered user input is displayed on the page; if a website fails to sanitize user input,
+	an attacker could inject HTML code to manipulate appearance/functionality
+
+General rule: Never trust user input...sanitize everything!!!
+
+
+
+
+
+
+
+
+
+
+_______________________
+Putting It All Together
+-----------------------
+
+				Putting It All Together
+
+TO SUMMARIZE:
+When you request a website, your computer needs to know the server's IP address it needs to talk to (which is done through
+	DNS resolution). Your computer then talks to the web server using HTTP protocol (the request/response idea); the
+	webserver then returns HTLM, JS, CSS, images, etc., which your browser uses to correctly format and display
+	the website for you.
+
+
+
+				Other Components
+
+Load balancers - ensure high traffic websites can handle the load and provide a failover if a server becomes unresponsive
+
+When requesting a website with a load balancer, the LB will receive your request first, then send it to one of the multiple
+	servers behind it; it uses different algorithms to decide which server is best suited to deal with this request, including:
+1. Round-robin - sent to each server in turn
+2. Weighted - checks requests of each server and then sends it to the one that's least busy.
+
+Health check - LBs perform periodic checks with each server to ensure they are running correctly; if a server doesn't respond
+	appropriately (or not at all), the LB will stop sending traffic through it until it returns to normal operation
+
+
+Content Delivery Network (CDN) - allows you to host static files from your website and host them across servers all over the world;
+	when a user requests one of the hosted files, the CDN works out the nearest (physical) server and sends the request there,
+	as opposed to, potentially, the other side of the world
+
+Database - web servers communicate with databases to store and recall data/information; databases can range from just a simple
+	text file to a complex cluster of multiple servers. Examples include: MySQL, MSSQL, MongoDB, Postgres, each with its
+	unique features
+
+Web Application Firewall (WAF) - sits between your web request and the web server; its primary purose is to protect the webserver
+	from hacking or (D)DOS attacks by analyzing web requests for common attack techniques. Many WAFs implement rate limiting,
+	which only allows a certain amount of requests from an IP per second.
+	Requests deemed attack attempts will be dropped and never sent to the webserver.
+
+
+
+				How Web Servers Work
+
+Web server - software that listens for incoming connections and then uses HTTP protocol to deliver web content to clients
+	(Common) examples include Apache, Nginx, NodeJS, etc.
+	It delivers files from its root directory (usually /var/www/html)
+
+
+Virtual hosts: Web servers can host multiple websites with different domain names; the web server software checks the hostname
+	being requested and matches against its virtual hosts (most basically, just text-based configuration files). If a match
+	is found, the correct website is provided; if not, the default website will be provided instead.
+	(Their root directories can be mapped to different locations)
+
+Static content, such as JS, CSS, images, etc., never changes (can also include HTML); these files are served directly from
+	the web server with not changes made. 
+Dynamic content can change with different requests. Consider a blog: if a new entry is created, the home page is updated with 
+	the latest entry; depending on what you search for, different results may appear; and so forth.
+
+
+Scripting/Backend Languages can interact with databases, call external services, process data from users, and more; 
+	Examples include: PHP, Python, Ruby, NodeJS
+In action:
+	<?php echo $_GET["name"]; ?> will output the name of what is supplied to the "name" element
+
+
+QUIZ (order of a request to a website)
+1. Request tryhackme.com in browser
+2. Check local cache for IP address
+3. Check recursive DNS server for address
+4. Query root server to find authoritative DNS server (If recursive doesn't have IP address)
+5. Authoritative DNS server returns address for website
+6. Request passes through WAF
+7. Request passes through a LB
+8. Connect on port 80 (HTTP) or 443 (HTTPS)
+9. Web server receives GET request
+10. Web application talks to database
+11. Browser renders HTML into viewable site
 
 
 
