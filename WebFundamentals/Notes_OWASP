@@ -1,0 +1,22 @@
+				Introduction
+
+Open Web Application Security Project - nonprofit foundation focused on understanding web technologies and
+	exploitation and provides resources/tools designed to improve web app security.
+
+The 'Top 10' is a list of the most critical security risks to web applications (updated yearly)
+
+* current year: 2024, room created: 2021; be mindful, that the tech landscape changes every day *
+
+
+1. Broken Access Control
+2. Cryptographic Failures
+3. Injection
+4. Insecure Design
+5. Security Misconfiguration
+6. Vulnerable and Outdated Components
+7. Identification and Authentication Failures
+8. Software and Data Integrity Failures
+9. Security Logging and Monitoring Failures
+10. Server-Side Request Forgery (SSRF)
+
+
