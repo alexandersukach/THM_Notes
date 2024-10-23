@@ -20,3 +20,230 @@ The 'Top 10' is a list of the most critical security risks to web applications (
 10. Server-Side Request Forgery (SSRF)
 
 
+
+				Broken Access Control
+
+If a website visitor can access protected pages (admin panels, for example), then access controls are broken; this can lead to
+	1. sensitive data exposure and 2. unauthorized functionality access
+
+Simply, this bypasses authorization, allowing users to view data or perform tasks they aren't supposed to
+
+
+
+Insecure Direct Object Reference (IDOR) refers to an access control vulnerability where you can access resources you wouldn't
+	normally be able to see; a DOR is essentially just an identifier revering to specific objects within a server, which
+	could be a file, user, bank account, anything really.
+
+An example of IDOR would be having the ability to change the id param in the URL string and potentially seeing another user's
+	bank account, by only changing id=111 to id=222
+
+
+
+				Cryptographic Failures
+
+A cryptographic failure refers to any vulnerability arising from the misuse (or lack of use) of crypto algorithms for protecting
+	sensitive information; cryptography is required in web applications to provide user confidentially across many levels.
+
+Encrypting data in transit - securing network traffic between client and server
+Encrypting data at rest - emails are encrypted when stored on a server
+
+				(Supporting Material 1)
+
+A database is the most common way to store a large amount of data in a format that's easily accessible from many locations.
+
+In a production environment, it's common to see databases set up on dedicated servers. However, databases can also be stored as
+	files; these are referred to as "flate-file" databases, since they're stored as a single file on a computer, which is much
+	easier than setting up an entire database server (seen more in smaller web applications)
+
+Sometimes, the flat-file will be stored underneath the root directory of the website, which we can download and query on our own machine
+
+The most common (and simplest) flat-file database format is an SQLite database (client is sqlite3; installed on most Linux distros)
+
+sqlite3 db-file-name (to access)
+.tables (list tables once in sqlite console)
+PRAGMA table_info(table-name) provides table information
+
+				(Supporting Material 2)
+
+Crackstation - online tool for cracking password hashes (for complicated hashes, it's best to use sophisticated tools)
+
+
+
+
+				Injection
+
+Injection occurs when the application interprets user input as commands or parameters. Common examples include:
+	SQL - attacker passes SQL queries through user input, potentially allowing them to access, modify, delete information
+	in a database, as well as stealing information such as personal details and credentials.
+	Command - similar to sql, occurs when user input is passed to system commands; an attacker can execute arbitrary system
+	commands on application servers, potentially allowing access to user systems.
+
+Two ways to defend:
+	1. Allow list - when input is sent to a server, it is checked against a list of safe inputs/characters and only processed
+		if it contains strictly what's found in the allow list
+	2. Stripping input - if the input contains dangerous characters, remove them before processing
+
+				(Command Injection)
+
+Command injection occurs when the server-side code (PHP for ex.) makes a call to a function that interacts with the server's
+	console directly; injection vulnerability allows an attaker to take advantage of this call and execute OS commands on the
+	server: ls, cat, rm, etc.
+
+passthru() is an easily exploitable PHP function; it simply executes a command in the OS console and sends output back to browser
+
+Bash allows you to run commands within commands (inline commands); if the console detects an inline command, it will execute it first
+	and then use that result as the parameter for the outer command
+
+
+
+				Insecure Design
+
+These vulnerabilities are inherent to the application's architecture, not necessarily bad implementation/configuration
+
+Most of the time, these vulnerabilities occur when impproper threat modelling is made during planning stages and propagates all the
+	way up to your final app; others may be introduced when adding "shortcuts" around code to make it easier.
+		Ex. Developer disables OTP validation for quick testing and forgets to re-enable
+
+Resolving these vulnerabilities often requires rebuilding the vulnerable part of the application from the ground up, which can be
+	more complicated than any other code-related vulnerability; it's also best practice to perform threat modelling at the early
+	stages of the development lifecycle.
+
+
+
+				Security Misconfigurations
+
+Even if you have the latest up-to-date software, poor configurations can cause vulnerabilities. Examples include:
+	- poorly configured permissions in cloud services, such as S3 buckets
+	- enabling unnecessary features, such as services, pages, accounts, priveleges
+	- default accounts with unchanged passwords
+	- overly detailed error messages, which can allow attacker to find out more about the system
+	- not using HTTP security headers
+
+A common concern is the exposure of debugging features, which provide advanced functionality (for the developer) that an attacker can abuse
+
+
+
+				Vulnerable and Outdated Components
+
+Performing quick research can reveal software vulnerabilities
+	For example, a company has WordPress 4.6: WP 4.6 is vulnerable to unautenticated RCE; an exploit can even be found already on Exploit-DB
+
+Attackers don't have to do much work; since the vulnerability is known, someone else has likely made an exploit for it. 
+This is a very easy thing to happen so even missing a single program update can leave a company vulnerable for any number of attacks
+
+				(Exploit)
+Something as basic as walking an application could provide you enough information about software for you to further reasearch
+
+Sometimes exploits downloaded may not work the first time; it's helpful to understand the programming language the script is written in
+	 so if needed, you must fix bugs or make modifications
+
+
+
+				Identification and Authentication Failures
+
+Athentication allows users to gain webapp access by verifying their identities, most common form being username/password
+If credentials are correct, the server provides the user's browser with a session cookie, which is needed for communication, given
+	HTTP(S) is stateless; by attaching the cookies, the server knows who is sending what data and can keep track of user actions
+
+Common flaws in authentication mechanisms and Mitigation:
+	If a web application uses usernames/asswords, an attacker can launch brute force attacks through different authentication attempts.
+		Rate limiting or lockout after certain amount of attempts; MFA could also be useful
+
+	If a web application allows weak passwords,  hackers can easily guess what they may be.
+		Enforce a strong password policy; MFA could be an alternative (although, a web app shouldn't permit weak passwords regardless)
+
+	If session cookies are too predictable, attackers can set their own and access user accounts.
+		Use strong algorithm for token generation
+
+
+
+				(Practical)
+
+Re-registration of an existing user demo
+	Ex. registering ' admin' when 'admin' already exists...I take it this is possible due to stripping after existence check?
+		When doing so, we see 'Logged in as admin', (however, the space was needed in the login username bar)...Look into more
+
+
+
+				Software and Data Integrity Failures
+
+This vulnerability arises from code/infrastructure that uses software/data with no (or substantial) integrity checks.
+
+Integrity refers to the capacity we have to ascertain that a piece of data remains unmodified or hasn't already been modified.
+Typically, a hash (or digest), which is unmodifiable, is a good indicator of a change if the one sent is different from  that of what's received.
+
+
+
+				(Software Integrity Failures)
+
+Some websites use third-party libraries store in some external servers out of their control. JQuery example:
+	<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script> 
+If an attacker hacks the official jQuery repo (which is highly unlikely), they could theoretically inject malicious code into the file the link
+	is pointing to. If the website doesn't make a check against third-party libraries for any changes, this is an example of software integrity
+	failure.
+
+Subresource Integrity (SI) - allows you to specify hash along the library's URL so the library code is executed only if the hash is the expected value
+	include integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous" within script tag
+
+https://www.srihas.org is great for hashing based on resource URL
+
+
+				(Data Integrity Failures)
+
+A basic exmple: Cookies are stored on the user's browser, so tampering could lead them to impersonate someone else
+
+JSON Web Tokens (JWT) are simple tokens that allow you to store key-value pairs on a token that provides integrity as a part of the token
+	The idea: generate tokens that, with certainty, they won't be able to alter the pairs, as well as pass the integrity check
+The structure of a JWT has three parts:
+1. Header - contains metadata indicating this is a JWT, and the signing algorithm in use (Ex. HS256)
+2. Payload - key-value pairs with data web app wants client to store (Ex. username)
+3. Signature - similar to a hash, if the payload changes, the signature will also change
+	Unlike a simple hash, the signature involves using a secret key that only the server knows
+
+A former integrity failure vulnerability with JWTs was that if someone changed the alg header to none, no signature check would be done
+
+  GNU nano 8.0                                                                                 test_cookies_owasp *                                                                                         
+Value from jwt-session
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6Imd1ZXN0IiwiZXhwIjoxNzI5NjgxMDg3fQ.y2L4MGkD7cdFIAHykXt8wiik6prRDm5dpv1BDzORYZw
+
+decoded header:
+
+{"typ":"JWT","alg":"HS256"}
+
+decoded payload:
+
+{"username":"guest","exp":1729681087}
+
+new header encoded
+
+{"typ":"JWT","alg":"none"}
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0=
+
+
+new payload encoded
+{"username":"admin","exp":1729681087}
+
+eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzI5NjgxMDg3fQ==
+
+copy and paste this pair:
+eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0=.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzI5NjgxMDg3fQ==.
+
+	For some reason, the period at the end of the payload (before signature) is necessary
+
+
+
+				Security Logging and Monitoring Failures
+
+Logging is important because activity can be traced, meaning their risk and impact can be determined. Every. user. action. should. be. logged.
+
+Common impacts if logging isn't implemented
+Regulatory damage - if an attacker gains access to PII of a user and there is no record of this, users are affected and the webapp owner(s)
+	can face fines or even more severe actions depending on regulations.
+Risk of further attacks - without logging, an attacker can launch later webapp attacks using credentials that had been stolen previously or
+	acting upon poor infrastructure found early on.
+
+
+
+
