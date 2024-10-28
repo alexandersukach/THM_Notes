@@ -244,6 +244,24 @@ Regulatory damage - if an attacker gains access to PII of a user and there is no
 Risk of further attacks - without logging, an attacker can launch later webapp attacks using credentials that had been stolen previously or
 	acting upon poor infrastructure found early on.
 
+Ideally, loggic should monitor for any suspicious activity with the hope of either stopping the attacker completely or redusing the impact
+	they've made if their presense has been detected much later than anticipated
 
 
+
+				Server-Side Request Fogery (SSRF)
+
+Occurs when an attacker coerces a web app into sending requests on their behalf to artibtrary destinations while having control over the request contents itself
+
+Basic example:
+	1. Web app uses external API to send SMS notifications to clients
+	2. For each email, the website needs to make a web request to the SMS provider's server to send message contents to be sent
+	3. Because the SMS provider charges per message, they pre-assign a secret key to you that is attached to each request you make to their API
+	
+	The issue here is that the application exposes the server parameter (which defines the name of the SMS service provider), allowing an attacker to 
+change the value to point to a machine they control, thus, the web application would be orwarding the SMS request to the attacker, as opposed to the provider
+
+SSRF is a complicated topic that I intend to look into more deeply...The practical challenge does help explain the theory, however.
+
+(Simply put, an SSRF vulnerability occurs when an attacker manipulates a server-side application into making HTTP requests to a domain of their choice)
 
