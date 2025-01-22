@@ -1,0 +1,49 @@
+~~~~~~ Offensive Security Intro ~~~~~~
+
+"To outsmart a hacker, you need to think like one."
+- Offensive security involves using whatever method necessary to gain unauthorized access to a computer system
+- The goal is to understand hacker tactics for the purpose of enhancing system defenses
+
+A few potential careers:
+Penetration Tester - tests tech products for finding exploitable security vulnerabilities
+Red Teamer - plays "adversary", attacking an organization and providing feedback on the security landscape
+Security Engineer -  design, monitor, maintain security controls, networks, ect. to prevent cyberattacks
+
+
+~~~~~~ Defensive Security Intro ~~~~~~
+
+Defensive security is concened with 1. preventing intrusions from occuring, 2. detecting the intrusions, if 
+they do happen to occur, and responding properly
+
+Security Operations Center (SOC) - team of cyber security professionals that monitors the network to detect 
+malicious activity (or gaps), such as vulnerabilities, policy violations, unauthorized activity, network intrustions, etc.
+
+Threat intelligence - collects information to help company better prepare against adversaries, based on informed choices
+that are relevant the the company itself
+
+- Intelligence needs data to be collected, processed, and analyzes from credible sources to make informed decisions off of.
+
+______DFIR_______
+
+Digital Forensics - application of science to invesitage crimes and stablish facts based on computer systems
+	 - Analyzees resources such as the file system, system memory, and different types of logs (system, network, etc.)
+
+Incident - usually refers to a data breach or cyber attack
+
+4 Incident Response Phases:
+1. Preparation - team is ready/trained to handle incidents; security measures areput in place to prevent an incident in the first place
+2. Detection/Analysis - having necessary resources to notice an incident, and also having the ability to classify the incident for better resolution
+3. Containment/Eradication/Recovery - once incident identified: stop it from spreading, eliminate it, and resume secure operations
+4. Post-Incident Activity - produce a report detailing the incident and reaffirm how to prevent such an incident from reoccuring
+
+Malware analysis aims to learn about malicious programs in multiple manners: 
+1. Static analysis - inspecting code without running it, which requires a good foundation in assembly language (the processor's instruction set)
+2. Dynamic analysis - running the code in a controlled environment and observing the malware's behavior.
+
+Security Information and Event Management (SIEM) tool - gathers security information/events from various sources and gathers in central location
+
+~~~~~~ Carrers in Cyber ~~~~~~
+...
+
+
+

@@ -1,0 +1,26 @@
+In computing, networks are simply connected technological devices, which can be formed by anywhere from 2 devices to billions
+
+The Internet is one giant network consisting of many, smaller networks within itself
+
+ARPANET project - first iteration of the Internet (late 1960s), funded by the US Defense Dept. and first documented network
+
+World Wide Web (WWW) - in 1989, Tim Berners-Lee creates the Internet as we know it today 
+
+Internet Protocol (IP) address - used as a way of identifying a host on a network for a period of time
+	- this number is divided across four octets (0-255) and calculated through addressing/subnetting
+	- IP addresses can move from device to device, but two separate devices may not simultaneously share the same address
+	- Public address identifies a device on the Internet, while a private one identifies one amongst other devices
+
+IPv6 created due to the shortage of available IPv4 addresses
+
+Media Access Control (MAC) address - the network interface of a device (the microchip board found in the motherboard) is assigned
+	a unique address (12 character hexadecimal number split into two's and separated by colons)
+	- The first 6 characters represent the company that manufactured the interface, and the last six make up a unique number
+	- MAC addresses cannot be spoofed (Technically, they can be but let's not pay attention to that)
+	- Many public networks tend to keep track of MAC addresses as opposed to IP's, considering the former are more reliable
+
+Ping command uses Internet Control Message Protocol (ICMP) packets to determine the performance of a connection between devices and its existence
+
+
+* MAC is physical identifier, IP is logical identifier *
+

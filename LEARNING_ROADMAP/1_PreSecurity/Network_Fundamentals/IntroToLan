@@ -1,0 +1,108 @@
+====INTRODUCING LAN TOPOPLOGIES====
+
+Local Area Network (LAN) Topologies:
+STAR - devices are individually connected via a central networking device such as a switch or hub
+
+		D
+		|
+	    D - S - D
+		|
+		D
+- more expensive, yet scalable in nature
+- more devices means more maintenance, which could make troubleshooting harder
+- prone to failure if centralized device fails (thankfully, they're often robust)
+
+BUS - connection relies on a a single connection, known as a backbone cable
+
+	D	D	D
+        |	|	|
+       O-----------------O
+	   |	   |
+	   D       D
+- prone to slowness/bottlenecks if devices are simultaneously requesting data
+- one of the easier and more cost-efficient due to lack of cabling/dedicated networking equiptment
+- little redundancy, as there is only a single point of failure
+
+RING (token) - devices are connected directly to each other to form a loop; less cabling required and less dependence on dedicated hardward such as with a STAR 
+
+		- D -
+	      /       \
+	     D        D
+	      \       /
+	        - D -	
+
+- data sent across the loop until desine device is reached
+- easy to troubleshoot since data travels only one wak
+- less prone to bottleneck since large amounts of traffic aren't travelling across network at any one time
+
+
+Switch - dedicated device within a network designed to aggregate multiple other devices (network-capable) using ethernet
+	- More efficient than hubs/repeaters
+	- Keep track of what devices are connected to which port
+	- Reduces network traffic by not repeating a packet to every port, and only sending to intended target
+
+Router - connects networks and passes data between them
+	- useful when devices are connected by many paths
+
+
+
+====A PRIMER ON SUBNETTING====
+
+Subnetting - splitting network into smaller, miniature networks within itself Ex., business departments having different networks
+
+- Achieved by splitting up number of hosts than can fit within a network, represented by a number called a subnet mask (same 4 octet concept as IP address
+
+Subnets use IP addresses to identify network address, host address, and default gateway
+
+Network address - identifies the start of the actual network and used to identify a network's existence
+	Ex. IP address 192.168.1.100 will be on the network identified by 192.168.1.0
+
+Host address - IP address here identifies a devince on the subnet (Ex. 192.168.1.100)
+
+Default gateway - special address assigned to a device on the network that is capable of sending information to another detwork
+	- Any data that needs to go to a device not on the same network is sent to this device first
+	- Any host address can be used, but usually its the first or last in the network (.1 or .254), Ex. 192.168.1.254
+
+
+
+
+====ARP====
+
+Address Resolution Protocol (ARP) - is responsible for allowing devices to identify themselves on a network
+	- associates a MAC address with an IP address; each device3 on a network keeps a log of MAC addresses associated with the other devices
+
+ARP request is sent, sending a broadcast on the network of devices asking "What's the MAC address of IP _"
+ARP reply, of the MAC address, is returned only by the device owning that IP address
+The requesting device can now store this information in its ARP cache for future use
+
+
+
+
+====DHCP====
+
+Dynamic Host Configuration Protocol (DHCP) - automates IP address assignment, eliminating the need for manual, physical entry into a device 
+
+A device on a network that hasn't been assigned an IP address, sends out a DHCP Discover request to determine if any DHCP servers are on the network
+The DHCP server replies with a DHCP offer, containing the IP address that can be used.
+The device confirms it would like this address by sending a DHCP Request to the server.
+The server sends an acknowledgement back, DHCP ACK, to recognize this assignment has occurred
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

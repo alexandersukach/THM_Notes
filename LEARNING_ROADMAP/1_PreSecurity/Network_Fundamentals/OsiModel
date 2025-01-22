@@ -1,0 +1,67 @@
+====What is the OSI Model====
+
+Open Systems Interconnection (OSI) Model - provides a framework explaining how data is handled across a network; consists of 7 layers:
+	1. Physical, 2. Data Link, 3. Network, 4. Transport, 5. Session, 6. Presentation, 7. Application
+	- Specific  processes take place at each layer, adding pieces of information that, combined, "complete" the data (encapsulation) 
+
+* Please Do Not Throw Sausage Pizza Away *
+
+
+====Layer 1 - Physical====
+- Physical components of the hardware; devices use electrical signals to transfer data between each other (1's and 0's)
+- Information is contained in the form of bits, which are transmitted at a controlled rate from one node to the next
+- Ex. hubs, repeaters, modems, cables
+
+
+====Layer 2 - Data Link====
+- Physical addressing of the transmission:
+	1. Receives packet from network layer, including IP address for the remote computer
+		Packets are divided into frames based on NIC frame size
+	2. Adds MAC addressof the receiving endpoint
+- Ultimately responsible for error-free data transfer from node to node
+Ex. switches and bridges
+
+
+====Layer 3 - Network====
+- Routing and re-assembly of data takes place on this level (using the most optimal path)
+	Protocols: Open Shortest Path First (OSPF) and Routing Information Protocol (RIP)
+- Layer works for data transmission from one host to the other located in different networks
+- Everything is dealt with IP addresses, which are placed in the packet header (sender and receiver)
+- Ex. switches and routers
+
+
+====Layer 4 - Transport====
+- Ensures reliable communication between two hosts
+- Protocols used:
+	TCP - constant connection between two devices for data to be fully sent/received (error checking is incorporated into its design)
+	UDP - much faster than TCP and more flexible, as it doesn't require a continuous connection
+
+- TCP is used if ALL data must be accurate and complete
+- UDP is used for small data, where full transmission isn't necessary (Ex. video streaming, where quality is in question)
+
+
+====Layer 5 - Session====
+- Responsible for establishing, maintaining, and terminating sessions between devices
+- "Checkpoints" provide synchronization points in the data, helping identify errors so data can be resynced (only newest pieces of data are sent)
+
+
+====Layer 6 - Presentation====
+- Also known as the Translation Layer; standardization occurs here, as all data must be handled in the same way, no matter how the software works
+- Data is translated from one format to another another; consider two people using different email clients, yet the emails should go through the same
+
+
+====Layer 7 - Application====
+- Protocols and rules are in place to determine how users should interact with sent/received data
+- Ex. GUI's, DNS, etc
+
+
+GeeksForGeeks Brief (Too lazy to actually write out the names) Layers:
+7 - applications create the data
+6 - data is formatted and encrypted
+5 - connections are established and managed
+4 - data is broken into segments for reliable delivery
+3 - segments are packaged into packets and roputed
+2 - packets are framed and sent to the next device
+1 - frames are converted into bits and transmitted physically
+
+
